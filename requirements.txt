@@ -1,0 +1,39 @@
+# ============================================================
+#  AttentionX — Requirements
+#  AI-powered video repurposing engine
+# ============================================================
+
+# --- API & Server ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12        # Required for FastAPI file uploads
+
+# --- Data Validation ---
+pydantic[email]>=2.10.0
+pydantic-settings>=2.7.0        # Settings management via .env
+
+# --- Frontend ---
+streamlit>=1.41.0
+requests>=2.32.0                # Streamlit → FastAPI HTTP calls
+
+# --- AI / LLM ---
+google-generativeai>=0.8.0      # Gemini 2.5 / 3 Flash support
+faster-whisper>=1.1.0           # Whisper v3-Turbo (4× faster than openai-whisper)
+ctranslate2>=4.4.0              # CTranslate2 backend for faster-whisper
+
+# --- Audio Analysis ---
+librosa>=0.10.2
+soundfile>=0.12.1               # Audio I/O for librosa
+
+# --- Video Processing ---
+moviepy>=2.1.1                  # 2026-stable video editing
+imageio[ffmpeg]>=2.36.0         # ffmpeg backend for moviepy
+
+# --- Computer Vision ---
+mediapipe>=0.10.18              # Face-tracking for smart 9:16 cropping
+opencv-python-headless>=4.10.0  # CV2 (headless = no GUI deps)
+
+# --- Utilities ---
+python-dotenv>=1.0.1
+tqdm>=4.67.0                    # Progress bars
+numpy>=1.26.0
