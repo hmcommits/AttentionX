@@ -6,13 +6,13 @@
 .env
 *.env.local
 
-# Generated output clips
-output/*.mp4
-output/*.mov
-output/*.avi
-output/*.mkv
-output/*.wav
-output/*.mp3
+# Generated output clips (any depth under /output)
+output/**/*.mp4
+output/**/*.mov
+output/**/*.avi
+output/**/*.mkv
+output/**/*.wav
+output/**/*.mp3
 
 # Python
 __pycache__/
