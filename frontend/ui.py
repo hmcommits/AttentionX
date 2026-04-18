@@ -9,6 +9,7 @@ Run with:
 import time
 import requests
 import streamlit as st
+from requests.exceptions import ConnectionError as RequestsConnectionError, Timeout
 
 # ---------------------------------------------------------------------------
 # Page Config (must be the FIRST Streamlit call)
@@ -107,12 +108,18 @@ ACCEPTED_TYPES = ["mp4", "mov"]
 # ---------------------------------------------------------------------------
 # Session State Initialisation
 # ---------------------------------------------------------------------------
-if "job_id" not in st.session_state:
-    st.session_state.job_id = None
+if "video_id" not in st.session_state:
+    st.session_state.video_id = None          # UUID returned by /upload
+if "video_metadata" not in st.session_state:
+    st.session_state.video_metadata = None    # dict from API VideoMetadataResponse
+if "source_file_path" not in st.session_state:
+    st.session_state.source_file_path = None  # used by /analyze in Prompt #3
 if "clips" not in st.session_state:
     st.session_state.clips = []
 if "processing_done" not in st.session_state:
     st.session_state.processing_done = False
+if "upload_error" not in st.session_state:
+    st.session_state.upload_error = None
 
 # ---------------------------------------------------------------------------
 # Sidebar — API Status & Settings
@@ -183,6 +190,42 @@ if uploaded_file:
     col2.metric("📦 Size", f"{uploaded_file.size / 1_000_000:.1f} MB")
     col3.metric("🎞️ Type", uploaded_file.type or "video")
 
+# ── Video Info Panel (shown after successful upload) ──────────────────────────
+if st.session_state.video_metadata:
+    meta = st.session_state.video_metadata
+    st.markdown("---")
+    st.markdown("#### 📊 Video Info")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric(
+        "🕐 Duration",
+        meta.get("duration_formatted", "—"),
+        help=f"{meta.get('duration_seconds', 0):.1f} seconds total",
+    )
+    m2.metric(
+        "📐 Resolution",
+        f"{meta.get('width', 0)}×{meta.get('height', 0)}",
+        help="Source video resolution",
+    )
+    m3.metric(
+        "🎞️ FPS",
+        f"{meta.get('fps', 0):.2f}",
+        help="Frames per second",
+    )
+    m4.metric(
+        "🆔 Video ID",
+        st.session_state.video_id[:8] + "…" if st.session_state.video_id else "—",
+        help=f"Full ID: {st.session_state.video_id}",
+    )
+    if not meta.get("metadata_available", True):
+        st.warning(
+            "⚠️  Metadata extraction failed (file may use an unsupported codec). "
+            "Processing will continue — clip timestamps may be approximate.",
+            icon="⚠️",
+        )
+
+if st.session_state.upload_error:
+    st.error(f"❌ Upload failed: {st.session_state.upload_error}")
+
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -196,24 +239,81 @@ process_btn = st.button(
 if process_btn and uploaded_file:
     st.session_state.processing_done = False
     st.session_state.clips = []
+    st.session_state.upload_error = None
+    st.session_state.video_metadata = None
 
     # ── st.status containers (Streamlit 1.28+) ──────────────────────────────
     with st.status("🚀 Running AttentionX Pipeline...", expanded=True) as status:
 
-        st.write("📤 **Step 1 of 4** — Uploading video to API...")
-        time.sleep(0.8)   # TODO: replace with real API call (Prompt #2)
-        st.write("✅ Upload complete")
+        # ── STEP 1: Real chunked upload ──────────────────────────────────────
+        st.write("📤 **Step 1 of 4** — Sending video to API (chunked stream)...")
+        upload_ok = False
+        try:
+            # Reset the file pointer before sending
+            uploaded_file.seek(0)
 
+            st.write("  ↳ Verifying file format (magic bytes)...")
+            resp = requests.post(
+                f"{API_BASE}/api/v1/upload",
+                files={"file": (uploaded_file.name, uploaded_file, uploaded_file.type or "video/mp4")},
+                timeout=(10, None),  # 10s to connect, unlimited for large file transfers
+            )
+
+            if resp.status_code == 201:
+                data = resp.json()
+                st.session_state.video_id = data["video_id"]
+                st.session_state.source_file_path = data["file_path"]
+                st.session_state.video_metadata = data["metadata"]
+                meta = data["metadata"]
+
+                st.write("  ↳ Extracting video metadata (MoviePy)...")
+                time.sleep(0.3)  # brief pause so the user sees the step
+
+                st.write(
+                    f"✅ Upload complete — "
+                    f"`{data['original_filename']}` · "
+                    f"`{data['file_size_mb']} MB` · "
+                    f"`{meta.get('duration_formatted', '?')}` · "
+                    f"`{meta.get('width', '?')}×{meta.get('height', '?')}` · "
+                    f"`{meta.get('fps', '?')} fps`"
+                )
+                upload_ok = True
+
+            else:
+                error_detail = resp.json().get("detail", resp.text)
+                st.session_state.upload_error = error_detail
+                status.update(
+                    label=f"❌ Upload rejected: {error_detail}",
+                    state="error",
+                    expanded=True,
+                )
+
+        except RequestsConnectionError:
+            msg = "Cannot connect to API. Is `uvicorn app.main:app --reload` running?"
+            st.session_state.upload_error = msg
+            status.update(label=f"❌ {msg}", state="error", expanded=True)
+
+        except Exception as exc:
+            msg = str(exc)
+            st.session_state.upload_error = msg
+            status.update(label=f"❌ Unexpected error: {msg}", state="error", expanded=True)
+
+        if not upload_ok:
+            st.stop()
+
+        # ── STEP 2: Whisper transcription (stub — Prompt #3) ─────────────────
         st.write("🎙️ **Step 2 of 4** — Transcribing audio (Whisper v3 Turbo)...")
-        time.sleep(1.2)   # TODO: replace with real Whisper call (Prompt #3)
+        time.sleep(1.2)   # TODO (Prompt #3): replace with real Whisper call
         st.write("✅ Transcript ready")
 
+        # ── STEP 3: Gemini analysis (stub — Prompt #3) ───────────────────────
         st.write("🧠 **Step 3 of 4** — Analysing narrative arcs (Gemini 2.5 Flash)...")
-        time.sleep(1.5)   # TODO: replace with real Gemini call (Prompt #3)
+        time.sleep(1.5)   # TODO (Prompt #3): replace with real Gemini call
         st.write("✅ 5 story arcs identified")
 
+        # ── STEP 4: Rendering (stub — Prompt #4) ─────────────────────────────
         st.write("🎬 **Step 4 of 4** — Rendering clips with face-tracked 9:16 crop...")
-        time.sleep(1.0)   # TODO: replace with real MoviePy/MediaPipe render (Prompt #4)
+        time.sleep(1.0)   # TODO (Prompt #4): replace with real MoviePy/MediaPipe render
         st.write("✅ Clips rendered")
 
         status.update(label="✅ Pipeline complete!", state="complete", expanded=False)

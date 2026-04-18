@@ -7,6 +7,7 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 python-multipart>=0.0.12        # Required for FastAPI file uploads
+aiofiles>=24.1.0                # Async file I/O for chunked upload writes
 
 # --- Data Validation ---
 pydantic[email]>=2.10.0

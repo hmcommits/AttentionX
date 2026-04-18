@@ -6,12 +6,14 @@ Handles all video processing:
   - MediaPipe         → Face detection & tracking for smart 9:16 cropping
   - Librosa           → Audio spike detection (secondary virality signal)
 
-Stubs implemented here; full logic arrives in Prompt #4.
+Phase 2 additions:
+  - VideoMetadata dataclass
+  - get_video_metadata() — safe extraction with try/finally resource cleanup
 """
 
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +23,20 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Data Models
 # ---------------------------------------------------------------------------
+
+@dataclass
+class VideoMetadata:
+    """
+    Metadata extracted from a source video file by MoviePy.
+    If extraction fails, metadata_available=False and all numeric fields are 0.
+    """
+    duration_seconds: float
+    duration_formatted: str    # "H:MM:SS"
+    width: int
+    height: int
+    fps: float
+    metadata_available: bool = True
+
 
 @dataclass
 class AudioSpike:
@@ -40,6 +56,104 @@ class RenderedClip:
     width: int
     height: int
     face_tracked: bool  # whether MediaPipe successfully tracked a face
+
+
+# ---------------------------------------------------------------------------
+# Helper: Format seconds → H:MM:SS
+# ---------------------------------------------------------------------------
+
+def _format_duration(seconds: float) -> str:
+    """Convert a float number of seconds to a human-readable H:MM:SS string."""
+    total = int(seconds)
+    h = total // 3600
+    m = (total % 3600) // 60
+    s = total % 60
+    return f"{h}:{m:02d}:{s:02d}"
+
+
+# ---------------------------------------------------------------------------
+# Metadata Extraction
+# ---------------------------------------------------------------------------
+
+def get_video_metadata(file_path: str) -> VideoMetadata:
+    """
+    Extract duration, resolution, and FPS from a video file using MoviePy.
+
+    Design decisions:
+      - Uses a strict try/finally block to ensure clip.close() is ALWAYS
+        called — prevents file handle leaks on Windows and Linux.
+      - If MoviePy fails for any reason (corruption, unsupported codec,
+        missing ffmpeg), catches the exception and returns a clean
+        VideoMetadata with metadata_available=False instead of crashing.
+      - This function is SYNCHRONOUS — call it via asyncio.to_thread()
+        from async FastAPI endpoints to avoid blocking the event loop.
+
+    Args:
+        file_path: Absolute or relative path to the video file.
+
+    Returns:
+        VideoMetadata populated with real values, or a safe "unavailable"
+        stub if extraction fails.
+    """
+    path = Path(file_path)
+
+    if not path.exists():
+        logger.error(f"get_video_metadata: file not found → {file_path}")
+        return _unavailable_metadata()
+
+    clip = None
+    try:
+        from moviepy import VideoFileClip
+
+        logger.info(f"Opening VideoFileClip: {file_path}")
+        # audio=False skips audio decoding — faster for metadata-only extraction
+        clip = VideoFileClip(str(path), audio=False)
+
+        duration_secs = float(clip.duration or 0.0)
+        width, height = clip.size          # returns (width, height) tuple
+        fps = float(clip.fps or 0.0)
+
+        return VideoMetadata(
+            duration_seconds=round(duration_secs, 2),
+            duration_formatted=_format_duration(duration_secs),
+            width=int(width),
+            height=int(height),
+            fps=round(fps, 2),
+            metadata_available=True,
+        )
+
+    except FileNotFoundError:
+        logger.error(f"get_video_metadata: FileNotFoundError → {file_path}")
+        return _unavailable_metadata()
+
+    except Exception as exc:
+        # Catches: corrupt files, missing codecs, ffmpeg errors, MoviePy bugs
+        logger.warning(
+            f"get_video_metadata: failed to read '{file_path}' — {type(exc).__name__}: {exc}"
+        )
+        return _unavailable_metadata()
+
+    finally:
+        # Always close the clip regardless of success or failure.
+        # MoviePy 2.x requires explicit close() to release the ffmpeg reader.
+        if clip is not None:
+            try:
+                clip.close()
+                logger.debug(f"VideoFileClip closed: {file_path}")
+            except Exception as close_exc:
+                logger.debug(f"clip.close() raised (non-critical): {close_exc}")
+
+
+def _unavailable_metadata() -> VideoMetadata:
+    """Return a clean 'metadata unavailable' sentinel — never crashes the caller."""
+    return VideoMetadata(
+        duration_seconds=0.0,
+        duration_formatted="Unknown",
+        width=0,
+        height=0,
+        fps=0.0,
+        metadata_available=False,
+    )
 
 
 # ---------------------------------------------------------------------------
