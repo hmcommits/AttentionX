@@ -10,6 +10,10 @@ Transform hours of long-form video (podcasts, interviews, keynotes) into highly-
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg?style=flat&logo=streamlit)](https://streamlit.io)
 [![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-AI-8b5cf6.svg?style=flat&logo=google)](https://ai.google.dev/)
 
+<br>
+
+**[🌍 View Live Application](https://attentionx-ui-production.up.railway.app/)** | **[🎬 Watch Demo Video](https://drive.google.com/file/d/1VxejpV63GaUFptoqXc3Qo6bhsDrd2unX/view?usp=sharing)**
+
 </div>
 
 ---
@@ -91,7 +95,9 @@ The glassmorphic dashboard will automatically open at `http://localhost:8501`.
 
 ## ☁️ Production Deployment (Railway)
 
-AttentionX is architected for a zero-configuration deployment to Platform-as-a-Service providers like Railway.app or Render. 
+**The live web app is currently deployed and hosted using [Railway.app](https://railway.app).**
+
+AttentionX is architected for a zero-configuration deployment to Platform-as-a-Service providers like Railway or Render. 
 
 The repository includes an `Aptfile` for Nixpacks to automatically pre-install the required `ffmpeg` binaries in the cloud environment natively, bypassing complex Docker containerization.
 
