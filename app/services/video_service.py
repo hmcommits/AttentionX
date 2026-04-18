@@ -625,6 +625,7 @@ def render_clip(
             preset="ultrafast",          # speed over compression ratio
             codec="libx264",
             audio_codec="aac",
+            ffmpeg_params=["-pix_fmt", "yuv420p"], # Windows/mobile compatibility
             logger=None,                 # suppress ffmpeg progress
             threads=2,                   # conservative on CPU-only laptop
         )
