@@ -1,132 +1,106 @@
-# AttentionX ⚡
-### AI-Powered Video Repurposing Engine
+<div align="center">
+  
+# ⚡ AttentionX
 
-> Transform long-form video into viral 60-second Shorts using **Narrative Intelligence** — not just audio spikes.
+**The fully autonomous, AI-driven video repurposing engine.**
+Transform hours of long-form video (podcasts, interviews, keynotes) into highly-viral, 60-second vertical Shorts using state-of-the-art Narrative Intelligence.
 
-AttentionX uses **Gemini 2.5 Flash** to identify semantic story arcs (Hook → Agitation → Solution) in transcripts, **Whisper v3 Turbo** for blazing-fast transcription, and **MediaPipe** for face-tracked smart 9:16 cropping.
+[![Python](https://img.shields.io/badge/Python-3.11+-3b82f6.svg?style=flat&logo=python)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg?style=flat&logo=streamlit)](https://streamlit.io)
+[![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-AI-8b5cf6.svg?style=flat&logo=google)](https://ai.google.dev/)
 
----
-
-## 🏗️ Architecture
-
-```
-AttentionX/
-├── app/                    # FastAPI backend
-│   ├── main.py             # App entry point, CORS, routers
-│   ├── routers/
-│   │   ├── health.py       # GET  /health
-│   │   ├── upload.py       # POST /api/v1/upload   ✅ Live
-│   │   ├── analyze.py      # POST /api/v1/analyze  🔧 Prompt #3
-│   │   └── export.py       # POST /api/v1/export   🔧 Prompt #4
-│   └── services/
-│       ├── ai_service.py   # Gemini + Whisper logic
-│       └── video_service.py # MoviePy + MediaPipe + Librosa
-├── frontend/
-│   └── ui.py               # Streamlit dark-mode UI
-├── output/                 # Generated clips (gitignored)
-├── .env.template           # Copy to .env and fill in keys
-└── requirements.txt
-```
+</div>
 
 ---
 
-## 🚀 First-Time Setup & Run Guide
+## 🚀 The Vision
 
-### Prerequisites
-- Python 3.11+ (3.13 confirmed working)
-- Git
-- **Two terminal windows** — one for the API, one for the UI
+Most AI clipping tools search your video for "loud noises" or arbitrary timestamps and call it a day, resulting in robotic, contextless clips. 
 
-### Step 1 — Clone & enter the repo
-```powershell
+**AttentionX** operates on a completely different paradigm. Using **Narrative Intelligence**, it transcribes your entire video with `faster-whisper` and pipes the data into a high-context reasoning model (Gemini 2.5 Flash). Gemini analyzes the transcript specifically for the structural mechanics of a viral video: a strong **Hook**, an engaging **Story Arc**, and a satisfying **Payoff**. 
+
+It ranks the top "Golden Nuggets" by Virality Score, tracks the speaker's face, renders karaoke captions, and exports a 9:16 vertical video right to your browser.
+
+## 🛠️ Architecture & Stack
+
+AttentionX is a modular, decentralized application separated into a heavy-compute REST API backend and a lightweight, premium glassmorphic frontend.
+
+* **Backend API**: `FastAPI`, `Uvicorn`, `MoviePy` (Video Processing)
+* **AI Core**: `faster-whisper` (16kHz Audio Transcription), `google-genai` (LLM Analysis)
+* **Computer Vision**: `MediaPipe` (Spatial Face-Tracking via median sampling)
+* **Frontend UI**: `Streamlit` with custom CSS (Outfit/Inter typography, animated `@keyframes`)
+* **Deployment**: `Nixpacks`, `Railway.app` ready.
+
+---
+
+## ✨ Key Features
+
+- **🧠 Semantic Narrative AI**: Exclusively hunts for storytelling structures rather than random audio spikes. Ranks outputs on a 1-10 Viral Score scale.
+- **🎥 The Vision Engine**: Extracts a 9:16 vertical crop from a 16:9 source video by utilizing MediaPipe to spatially track the subject's face dynamically. 
+- **📝 Zero-Dependency Captions**: Renders glassmorphic headlines and time-synchronized karaoke captions at the bottom of the screen completely natively using PIL (Pillow)—no `ImageMagick` binaries required.
+- **⚡ Ultrafast Local Encoding**: Asynchronous background rendering pipelines optimized to leverage `libx264` and `yuv420p` compatible encoding, guaranteeing smooth playback on Windows Media Player and iOS natively.
+
+---
+
+## 💻 Running Locally
+
+### 1. Prerequisites
+Ensure you have the following installed on your system:
+- Python 3.11 or higher
+- `ffmpeg` (must be accessible in your system PATH)
+
+### 2. Environment Setup
+Clone the repository and install the dependencies:
+```bash
 git clone https://github.com/hmcommits/AttentionX.git
 cd AttentionX
-```
 
-### Step 2 — Create and activate a virtual environment
-```powershell
-# Create venv
+# Create and activate a virtual environment
 python -m venv venv
+# On Windows:
+source venv/Scripts/activate
+# On Mac/Linux:
+# source venv/bin/activate
 
-# Activate (Windows PowerShell)
-.\venv\Scripts\activate
-
-# You should see (venv) in your prompt
-```
-
-> **Linux / macOS:** use `source venv/bin/activate` instead. On Windows, `source` is not valid — use `.\venv\Scripts\activate`.
-
-### Step 3 — Install all dependencies
-```powershell
+# Install requirements
 pip install -r requirements.txt
 ```
-> ⚠️ This installs heavy packages (MoviePy, MediaPipe, Whisper). Expect 3–5 minutes on first run.
 
-### Step 4 — Set up your environment
-```powershell
-# Copy the template
-copy .env.template .env
-
-# Open .env and fill in your Gemini API key:
-#   GEMINI_API_KEY=your_real_key_here
+### 3. API Key Configuration
+Create a `.env` file in the root directory and add your Google Gemini AI key:
+```env
+GEMINI_API_KEY="your_google_ai_studio_api_key_here"
 ```
-Get a free Gemini API key at: https://aistudio.google.com/app/apikey
 
-### Step 5 — Start the FastAPI backend
-**In Terminal 1** (keep this running):
-```powershell
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+### 4. Booting the Application
+AttentionX requires both the Backend (FastAPI) and Frontend (Streamlit) services to be running simultaneously in two separate terminals.
+
+**Terminal 1 (Backend API):**
+```bash
+uvicorn app.main:app --reload
 ```
-Verify it's live: http://localhost:8000/health → should return `{"status":"ok"}`
 
-Interactive API docs: http://localhost:8000/docs
-
-### Step 6 — Start the Streamlit frontend
-**In Terminal 2** (new window, same venv activated):
-```powershell
+**Terminal 2 (Frontend UI):**
+```bash
 streamlit run frontend/ui.py
 ```
-The UI will open automatically at: http://localhost:8501
+The glassmorphic dashboard will automatically open at `http://localhost:8501`.
 
 ---
 
-## 🔑 API Keys Required
+## ☁️ Production Deployment (Railway)
 
-| Key | Where to get it | Required for |
-|---|---|---|
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) | Narrative arc analysis (Prompt #3) |
+AttentionX is architected for a zero-configuration deployment to Platform-as-a-Service providers like Railway.app or Render. 
 
-> Steps 1–2 (upload + metadata) work **without any API key**.
+The repository includes an `Aptfile` for Nixpacks to automatically pre-install the required `ffmpeg` binaries in the cloud environment natively, bypassing complex Docker containerization.
 
----
-
-## 🧪 Quick Test (no API key needed)
-
-1. Start both servers (Steps 5 & 6 above)
-2. Open http://localhost:8501
-3. Upload any `.mp4` file
-4. Click **⚡ Extract Viral Clips**
-5. You should see the **Video Info** panel with duration, resolution, and FPS
+1. Create a New Project on Railway from this GitHub repository.
+2. Deploy the **Backend API** using the provided `railway.json` configuration. Inject your `GEMINI_API_KEY` into the dashboard.
+3. Deploy the **Frontend UI** as a second service. Start command: `streamlit run frontend/ui.py --server.port $PORT --server.address 0.0.0.0`. Inject the `API_URL` variable pointing to your backend service domain.
 
 ---
 
-## 🗺️ Roadmap
-
-| Phase | Status | What it does |
-|---|---|---|
-| Scaffolding | ✅ Done | Project structure, FastAPI skeleton, Streamlit UI |
-| Upload Pipeline | ✅ Done | Chunked upload, MIME verification, metadata extraction |
-| AI Analysis | 🔧 Next | Whisper transcription + Gemini narrative arc detection |
-| Export Pipeline | 🔧 Planned | MoviePy rendering + MediaPipe face-tracked 9:16 crop |
-
----
-
-## ⚙️ Common Issues
-
-| Problem | Fix |
-|---|---|
-| `source: not recognized` | Use `.\venv\Scripts\activate` on Windows PowerShell |
-| `ModuleNotFoundError` | Make sure venv is active and you ran `pip install -r requirements.txt` |
-| Sidebar shows `● OFFLINE` | Start the backend first: `uvicorn app.main:app --reload` |
-| Upload fails with 400 | Only `.mp4` and `.mov` files accepted; file must be a real video |
-| MoviePy ffmpeg error | Run `pip install imageio[ffmpeg]` to pull the ffmpeg binary |
+<div align="center">
+  <i>Built for the 2026 content era.</i>
+</div>
