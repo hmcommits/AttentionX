@@ -72,6 +72,80 @@ def _format_duration(seconds: float) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Audio Extraction (Phase 3 addition)
+# ---------------------------------------------------------------------------
+
+def extract_audio(video_path: str, output_dir: Optional[str] = None) -> str:
+    """
+    Extract the audio track from a video file as a 16kHz mono WAV.
+
+    Why 16kHz mono?
+      - Whisper's native sample rate is 16kHz — feeding it higher-rate audio
+        wastes CPU on resampling with zero quality gain.
+      - Mono halves the audio data size, cutting both RAM usage and transcription time.
+
+    This is a SYNCHRONOUS blocking call — invoke via asyncio.to_thread() from
+    async FastAPI endpoints.
+
+    Args:
+        video_path: Path to the source .mp4 / .mov file.
+        output_dir: Directory to write audio.wav. Defaults to same dir as video.
+
+    Returns:
+        Absolute path to the written audio.wav file.
+
+    Raises:
+        FileNotFoundError: If video_path does not exist.
+        ValueError:        If the video has no audio track.
+        RuntimeError:      On MoviePy / ffmpeg write failures.
+    """
+    from moviepy import VideoFileClip
+
+    video_path = Path(video_path)
+    if not video_path.exists():
+        raise FileNotFoundError(f"Video not found: {video_path}")
+
+    out_dir = Path(output_dir) if output_dir else video_path.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    output_path = out_dir / "audio.wav"
+
+    logger.info(f"Extracting 16kHz mono WAV from {video_path} → {output_path}")
+
+    clip = None
+    try:
+        clip = VideoFileClip(str(video_path))
+
+        if clip.audio is None:
+            raise ValueError(f"Video '{video_path.name}' has no audio track.")
+
+        clip.audio.write_audiofile(
+            str(output_path),
+            fps=16_000,                     # 16kHz — Whisper's native rate
+            nbytes=2,                       # 16-bit PCM
+            ffmpeg_params=["-ac", "1"],     # Mono — halves the data
+            logger=None,                    # Suppress MoviePy progress bar
+        )
+
+        logger.info(
+            f"Audio extracted: {output_path.stat().st_size / 1_000:.0f} KB"
+        )
+        return str(output_path)
+
+    except (ValueError, FileNotFoundError):
+        raise
+    except Exception as exc:
+        raise RuntimeError(f"Audio extraction failed: {exc}") from exc
+    finally:
+        if clip is not None:
+            try:
+                clip.close()
+            except Exception:
+                pass
+
+
+
+
+# ---------------------------------------------------------------------------
 # Metadata Extraction
 # ---------------------------------------------------------------------------
 
