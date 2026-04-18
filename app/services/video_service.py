@@ -367,10 +367,21 @@ def compute_crop_box(frame_w: int, frame_h: int, face_cx: int) -> tuple[int, int
         (x1, y1, x2, y2) — pixel coordinates for MoviePy clip.cropped()
     """
     crop_w = int(frame_h * 9 / 16)
+    
+    # Ensure crop width is divisible by 2 for H.264 yuv420p support
+    if crop_w % 2 != 0:
+        crop_w -= 1
+        
     x1 = face_cx - crop_w // 2
     # Clamp to frame bounds
     x1 = max(0, min(x1, frame_w - crop_w))
-    return (x1, 0, x1 + crop_w, frame_h)
+    
+    # Ensure crop height is divisible by 2
+    y2 = frame_h
+    if y2 % 2 != 0:
+        y2 -= 1
+        
+    return (x1, 0, x1 + crop_w, y2)
 
 
 # ---------------------------------------------------------------------------
