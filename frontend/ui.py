@@ -88,26 +88,6 @@ with st.sidebar:
     st.markdown("## ⚡ AttentionX")
     st.markdown("---")
 
-    # Live API health check
-    st.markdown("### 🔌 Backend Status")
-    try:
-        resp = requests.get(f"{API_BASE}/health", timeout=2)
-        if resp.status_code == 200:
-            data = resp.json()
-            st.markdown(
-                f'<span class="badge-ok">● ONLINE</span> — {data.get("service","API")} v{data.get("version","?")}',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown('<span class="badge-warn">● DEGRADED</span>', unsafe_allow_html=True)
-    except requests.exceptions.ConnectionError:
-        st.markdown(
-            '<span class="badge-down">● OFFLINE</span><br>'
-            '<small>Start: <code>uvicorn app.main:app --reload</code></small>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("---")
     st.markdown("### ⚙️ Settings")
     max_clips = st.slider("Golden Nuggets to find", min_value=1, max_value=10, value=3)
     face_track = st.toggle("Smart face-tracking crop", value=True)
