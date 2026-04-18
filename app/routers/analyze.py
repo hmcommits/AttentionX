@@ -233,6 +233,19 @@ async def analyze_video(
     except Exception as exc:
         logger.warning(f"[{video_id}] Could not save analysis.json: {exc}")
 
+    # Save full transcript for Phase 4 karaoke captions
+    try:
+        transcript_data = [
+            {"start": s.start, "end": s.end, "text": s.text}
+            for s in segments
+        ]
+        transcript_path = job_dir / "transcript.json"
+        with open(transcript_path, "w", encoding="utf-8") as f:
+            json.dump(transcript_data, f, indent=2, ensure_ascii=False)
+        logger.info(f"[{video_id}] transcript.json saved ({len(transcript_data)} segments)")
+    except Exception as exc:
+        logger.warning(f"[{video_id}] Could not save transcript.json: {exc}")
+
     logger.info(
         f"[{video_id}] Analysis complete: {len(nuggets)} golden nuggets identified"
     )

@@ -572,30 +572,115 @@ if st.session_state.analysis_done and st.session_state.golden_nuggets:
 
             st.markdown("---")
 
-            # Action row
-            dl_col, export_col = st.columns(2)
-            with dl_col:
-                st.button(
-                    "🎬 Render Clip",
-                    key=f"render_{i}",
-                    disabled=True,
-                    help="Coming in Phase 4 — MoviePy rendering pipeline",
-                )
-            with export_col:
-                st.button(
-                    "⬇️ Download",
-                    key=f"dl_{i}",
-                    disabled=True,
-                    help="Available after clip is rendered",
-                )
+            # ── Render / Video display ───────────────────────────────────────
+            clip_url_key   = f"clip_url_{i}"
+            clip_error_key = f"clip_error_{i}"
 
-    # Re-analyze option
+            if st.session_state.get(clip_error_key):
+                st.error(f"❌ Render failed: {st.session_state[clip_error_key]}")
+                if st.button("🔄 Try Again", key=f"retry_{i}"):
+                    st.session_state[clip_error_key] = None
+                    st.rerun()
+
+            elif st.session_state.get(clip_url_key):
+                # ── Clip already rendered — show player & download ───────────
+                clip_url = st.session_state[clip_url_key]
+                st.success("🎬 Vertical clip ready!")
+                st.video(clip_url)
+
+                try:
+                    clip_bytes = requests.get(clip_url, timeout=30).content
+                    st.download_button(
+                        label="⬇️ Download Vertical Clip",
+                        data=clip_bytes,
+                        file_name=f"attentionx_nugget_{i + 1}.mp4",
+                        mime="video/mp4",
+                        key=f"dl_btn_{i}",
+                        use_container_width=True,
+                    )
+                except Exception:
+                    st.info("📥 Clip is ready — use the URL above to download.")
+
+            else:
+                # ── Render button (not yet rendered) ─────────────────────────
+                if st.session_state.video_id is None:
+                    st.info("Upload a video first to enable rendering.")
+                else:
+                    render_btn = st.button(
+                        "🎬 Generate Vertical Video",
+                        key=f"render_{i}",
+                        use_container_width=True,
+                    )
+
+                    if render_btn:
+                        st.session_state[clip_error_key] = None
+                        with st.status(
+                            "🎬 Rendering 9:16 vertical clip...",
+                            expanded=True,
+                        ) as render_status:
+                            st.write("🔍  Sampling frames for face position (MediaPipe)...")
+                            st.write("✂️  Applying 9:16 crop & caption overlays (PIL)...")
+                            st.write("⚙️  Encoding with ultrafast preset...")
+
+                            try:
+                                resp = requests.post(
+                                    f"{API_BASE}/api/v1/export/"
+                                    f"{st.session_state.video_id}/{i}",
+                                    timeout=(10, None),
+                                )
+
+                                if resp.status_code == 200:
+                                    data = resp.json()
+                                    # UI Persistence: save to session_state immediately
+                                    st.session_state[clip_url_key] = data["clip_url"]
+
+                                    face_info = (
+                                        "✅ Face-tracked"
+                                        if data.get("face_tracked")
+                                        else "📐 Centre crop"
+                                    )
+                                    cached_note = " (cached)" if data.get("cached") else ""
+                                    render_status.update(
+                                        label=(
+                                            f"✅ Clip ready!{cached_note} "
+                                            f"{face_info} · "
+                                            f"{data.get('width','?')}×{data.get('height','?')}"
+                                        ),
+                                        state="complete",
+                                        expanded=False,
+                                    )
+                                else:
+                                    err = resp.json().get("detail", "Render failed")
+                                    st.session_state[clip_error_key] = err
+                                    render_status.update(
+                                        label=f"❌ {err}", state="error", expanded=True
+                                    )
+
+                            except RequestsConnectionError:
+                                err = "Cannot connect to API server."
+                                st.session_state[clip_error_key] = err
+                                render_status.update(
+                                    label=f"❌ {err}", state="error", expanded=True
+                                )
+                            except Exception as exc:
+                                err = str(exc)
+                                st.session_state[clip_error_key] = err
+                                render_status.update(
+                                    label=f"❌ {err}", state="error", expanded=True
+                                )
+
+                        st.rerun()
+
+    # ── Re-Analyze option ─────────────────────────────────────────────────────
     st.markdown("---")
-    if st.button("🔄 Re-Analyze (clear cache)", key="reanalyze_btn"):
-        # Clear analysis.json via file deletion triggers would need an API call;
-        # for now, reset session state to allow re-running from the UI
+    if st.button("🔄 Re-Analyze (clear cache & re-run)", key="reanalyze_btn"):
+        # Clear analysis state — rendered clips are preserved in output/ dir
         st.session_state.analysis_done = False
         st.session_state.golden_nuggets = []
         st.session_state.analysis_cached = False
         st.session_state.analysis_error = None
+        # Clear any per-clip render state
+        for k in list(st.session_state.keys()):
+            if k.startswith("clip_url_") or k.startswith("clip_error_"):
+                del st.session_state[k]
         st.rerun()
