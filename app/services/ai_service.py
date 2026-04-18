@@ -281,18 +281,10 @@ class NarrativeAnalysisService:
         if not segments:
             raise ValueError("Transcript is empty — cannot analyse a silent video.")
 
-        import google.generativeai as genai
+        from google import genai
+        from google.genai import types
 
-        genai.configure(api_key=self.api_key)
-
-        model = genai.GenerativeModel(
-            model_name=self.model_id,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",  # Forces raw JSON output
-                temperature=0.4,    # Low = consistent, structured JSON
-                max_output_tokens=2048,
-            ),
-        )
+        client = genai.Client(api_key=self.api_key)
 
         formatted = _format_transcript_for_gemini(segments)
         prompt = _GEMINI_PROMPT_TEMPLATE.format(
@@ -306,7 +298,15 @@ class NarrativeAnalysisService:
         )
 
         try:
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",  # Forces raw JSON output
+                    temperature=0.4,    # Low = consistent, structured JSON
+                    max_output_tokens=8192,  # Increased from 2048 to prevent JSON truncation
+                )
+            )
             raw_json = response.text
         except Exception as exc:
             raise RuntimeError(f"Gemini API error: {exc}") from exc
