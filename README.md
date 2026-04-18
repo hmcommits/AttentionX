@@ -18,6 +18,9 @@ Transform hours of long-form video (podcasts, interviews, keynotes) into highly-
 
 ---
 
+**View Demo Video:** https://drive.google.com/file/d/1VxejpV63GaUFptoqXc3Qo6bhsDrd2unX/view?usp=sharing
+**Deployment link:** https://attentionx-ui-production.up.railway.app/
+
 ## 🚀 The Vision
 
 Most AI clipping tools search your video for "loud noises" or arbitrary timestamps and call it a day, resulting in robotic, contextless clips. 
