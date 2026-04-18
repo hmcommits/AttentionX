@@ -10,6 +10,7 @@ Run with:
 
 import time
 import requests
+from pathlib import Path
 import streamlit as st
 from requests.exceptions import ConnectionError as RequestsConnectionError
 
@@ -24,146 +25,14 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Custom CSS — dark glassmorphism + viral score badges
+# Load Custom CSS
 # ---------------------------------------------------------------------------
-st.markdown("""
-<style>
-  /* ── Global ── */
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+def _load_css():
+    css_path = Path(__file__).parent / "style.css"
+    if css_path.exists():
+        st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
-  html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-    background-color: #0a0a0f;
-    color: #e2e8f0;
-  }
-
-  /* ── Main container ── */
-  .block-container {
-    padding-top: 2rem;
-    max-width: 1100px;
-  }
-
-  /* ── Hero header ── */
-  .hero-title {
-    font-size: 3rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.25rem;
-  }
-  .hero-sub {
-    font-size: 1.1rem;
-    color: #94a3b8;
-    margin-bottom: 2rem;
-  }
-
-  /* ── Glass card ── */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 1.5rem 2rem;
-    margin-bottom: 1.5rem;
-    backdrop-filter: blur(10px);
-  }
-
-  /* ── Status badge ── */
-  .badge-ok   { color: #22c55e; font-weight: 600; }
-  .badge-down { color: #ef4444; font-weight: 600; }
-  .badge-warn { color: #f59e0b; font-weight: 600; }
-
-  /* ── Viral Score Badges ── */
-  .vs-badge {
-    display: inline-block;
-    padding: 0.25em 0.75em;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 0.02em;
-  }
-  .vs-fire {
-    background: rgba(239, 68, 68, 0.18);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.4);
-  }
-  .vs-hot {
-    background: rgba(245, 158, 11, 0.18);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.4);
-  }
-  .vs-warm {
-    background: rgba(99, 102, 241, 0.18);
-    color: #818cf8;
-    border: 1px solid rgba(99, 102, 241, 0.4);
-  }
-
-  /* ── Golden Nugget card header ── */
-  .nugget-headline {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin: 0.3rem 0 0.5rem 0;
-    line-height: 1.3;
-  }
-  .nugget-meta {
-    font-size: 0.82rem;
-    color: #64748b;
-    margin-bottom: 0.6rem;
-  }
-  .nugget-rationale {
-    color: #94a3b8;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    border-left: 3px solid rgba(99, 102, 241, 0.5);
-    padding-left: 0.75rem;
-    margin-top: 0.5rem;
-  }
-
-  /* ── Cached analysis badge ── */
-  .cache-badge {
-    display: inline-block;
-    padding: 0.15em 0.6em;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    margin-left: 0.5rem;
-  }
-
-  /* ── Streamlit overrides ── */
-  .stButton > button {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0.6rem 2rem;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: opacity 0.2s ease;
-    width: 100%;
-  }
-  .stButton > button:hover { opacity: 0.85; }
-  .stButton > button:disabled {
-    background: rgba(99, 102, 241, 0.25);
-    opacity: 0.5;
-  }
-
-  div[data-testid="stFileUploader"] {
-    border: 2px dashed rgba(99, 102, 241, 0.4);
-    border-radius: 12px;
-    padding: 1rem;
-    background: rgba(99, 102, 241, 0.04);
-  }
-
-  .stProgress > div > div {
-    background: linear-gradient(90deg, #6366f1, #ec4899);
-  }
-</style>
-""", unsafe_allow_html=True)
+_load_css()
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -247,7 +116,7 @@ with st.sidebar:
     st.markdown("### 📖 About")
     st.markdown(
         "AttentionX uses **Narrative Intelligence** to find "
-        "Hook → Story Arc → Payoff moments — not just loud audio spikes.",
+        "Hook → Story Arc → Payoff moments.",
         help="Powered by Gemini 2.5 Flash + Whisper + MediaPipe",
     )
 
@@ -263,14 +132,38 @@ with st.sidebar:
 
 
 # ---------------------------------------------------------------------------
-# Main — Hero Header
+# Main — Hero Header & 1-2-3 Onboarding Flow
 # ---------------------------------------------------------------------------
+st.markdown('<div class="animated-fade">', unsafe_allow_html=True)
 st.markdown('<h1 class="hero-title">AttentionX ⚡</h1>', unsafe_allow_html=True)
 st.markdown(
     '<p class="hero-sub">Transform long-form video into viral 60-second Shorts '
     'using AI Narrative Intelligence.</p>',
     unsafe_allow_html=True,
 )
+
+# 1-2-3 Flow
+st.markdown("""
+<div class="onboarding-flow">
+    <div class="onboarding-step">
+        <span class="onboarding-icon">📁</span>
+        <div class="onboarding-title">1. Drop a video</div>
+        <div class="onboarding-desc">Upload a podcast, interview, or any long-form content.</div>
+    </div>
+    <div class="onboarding-step">
+        <span class="onboarding-icon">🧠</span>
+        <div class="onboarding-title">2. AI Analysis</div>
+        <div class="onboarding-desc">Gemini identifies viral storytelling arcs (hooks, tension, payoff).</div>
+    </div>
+    <div class="onboarding-step">
+        <span class="onboarding-icon">📱</span>
+        <div class="onboarding-title">3. Export Shorts</div>
+        <div class="onboarding-desc">Render face-tracked 9:16 vertical clips with karaoke captions.</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ---------------------------------------------------------------------------
 # ── STAGE 1: Upload ──────────────────────────────────────────────────────────
@@ -421,6 +314,7 @@ if st.session_state.video_id and not st.session_state.analysis_done:
     analyze_btn = st.button(
         "🔍 Analyze for Virality",
         key="analyze_btn",
+        type="primary"
     )
 
     if analyze_btn:
@@ -558,17 +452,23 @@ if st.session_state.analysis_done and st.session_state.golden_nuggets:
             # Progress bar as virality meter
             st.progress(score / 10, text=f"Hook strength: {score}/10")
 
-            # Rationale
-            if rationale:
-                st.markdown(
-                    f'<p class="nugget-rationale">{rationale}</p>',
-                    unsafe_allow_html=True,
-                )
-
-            # Transcript snippet
-            if snippet:
-                with st.expander("📄 Transcript excerpt", expanded=False):
-                    st.markdown(f"> {snippet}")
+            # ── Rationale & Transcript (Side-by-Side UI) ─────────────────────
+            # Clean CSS-based content formatting to avoid markdown artifacting
+            rat_col, trans_col = st.columns(2, gap="large")
+            with rat_col:
+                st.markdown("💡 **Why it's viral**")
+                if rationale:
+                    st.markdown(
+                        f'<div class="nugget-rationale">{rationale}</div>',
+                        unsafe_allow_html=True,
+                    )
+            with trans_col:
+                st.markdown("📄 **Transcript snippet**")
+                if snippet:
+                    st.markdown(
+                        f'<div class="nugget-transcript">{snippet}</div>',
+                        unsafe_allow_html=True,
+                    )
 
             st.markdown("---")
 
@@ -586,7 +486,11 @@ if st.session_state.analysis_done and st.session_state.golden_nuggets:
                 # ── Clip already rendered — show player & download ───────────
                 clip_url = st.session_state[clip_url_key]
                 st.success("🎬 Vertical clip ready!")
-                st.video(clip_url)
+                
+                # Center the video and limit height so it doesn't take over screen
+                vid_col, _, = st.columns([1, 2])
+                with vid_col:
+                    st.video(clip_url)
 
                 try:
                     clip_bytes = requests.get(clip_url, timeout=30).content
@@ -597,6 +501,7 @@ if st.session_state.analysis_done and st.session_state.golden_nuggets:
                         mime="video/mp4",
                         key=f"dl_btn_{i}",
                         use_container_width=True,
+                        type="primary"
                     )
                 except Exception:
                     st.info("📥 Clip is ready — use the URL above to download.")
@@ -610,6 +515,7 @@ if st.session_state.analysis_done and st.session_state.golden_nuggets:
                         "🎬 Generate Vertical Video",
                         key=f"render_{i}",
                         use_container_width=True,
+                        type="primary"
                     )
 
                     if render_btn:

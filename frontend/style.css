@@ -1,0 +1,221 @@
+/*
+===========================================================================
+  AttentionX — Main Stylesheet
+  Premium 2026 UI (Dark Glassmorphism, Cyber Palette, Outfit Typography)
+===========================================================================
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap');
+
+/* ── Reset & Global ── */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    color: #f8fafc;
+    background-color: #050508;
+    background-image: radial-gradient(circle at top, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+    background-attachment: fixed;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif !important;
+    letter-spacing: -0.02em;
+}
+
+/* ── Fade-in Micro-animation ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animated-fade {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* ── Container ── */
+.block-container {
+    padding-top: 3rem;
+    max-width: 1200px;
+}
+
+/* ── Hero & Onboarding (1-2-3 Flow) ── */
+.hero-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 30%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.2rem;
+    line-height: 1.1;
+}
+
+.hero-sub {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: #cbd5e1;
+    margin-bottom: 2.5rem;
+}
+
+.onboarding-flow {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+.onboarding-step {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.onboarding-step:hover {
+    transform: translateY(-3px);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+.onboarding-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+.onboarding-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+}
+.onboarding-desc {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+/* ── Glass Cards ── */
+.glass-card {
+    background: rgba(15, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Status Badges ── */
+.badge-ok   { color: #4ade80; font-weight: 600; font-family: 'Outfit'; }
+.badge-down { color: #f87171; font-weight: 600; font-family: 'Outfit'; }
+.badge-warn { color: #fbbf24; font-weight: 600; font-family: 'Outfit'; }
+
+/* ── Viral Score Badges ── */
+.vs-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3em 1em;
+    border-radius: 999px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    box-shadow: 0 0 15px currentColor;
+}
+.vs-fire {
+    background: rgba(244, 63, 94, 0.15);
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.5);
+}
+.vs-hot {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+}
+.vs-warm {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(129, 140, 248, 0.5);
+}
+
+/* ── Golden Nugget Formatting ── */
+.nugget-rationale {
+    background: rgba(99, 102, 241, 0.05);
+    border-left: 3px solid #6366f1;
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    height: 100%;
+}
+.nugget-transcript {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    height: 100%;
+    margin-top: 0 !important;
+}
+
+/* ── Customizing Streamlit Widgets ── */
+/* Expander glow based on virality */
+div[data-testid="stExpander"] {
+    background: rgba(20, 20, 30, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+div[data-testid="stExpander"]:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 25px rgba(99, 102, 241, 0.15);
+}
+
+/* Primary Button Highlighting */
+.stButton > button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+}
+.stButton > button:hover {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+/* Make "Generate Vertical Video" distinct (Targeting primary button styling if possible or via layout) */
+button[kind="primary"] {
+    background: linear-gradient(135deg, #6366f1, #d946ef);
+    border: none;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
+}
+button[kind="primary"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(217, 70, 239, 0.5);
+}
+
+/* File Uploader styling */
+div[data-testid="stFileUploader"] {
+    border: 2px dashed rgba(139, 92, 246, 0.5);
+    border-radius: 16px;
+    background: rgba(139, 92, 246, 0.03);
+    padding: 2rem;
+    transition: all 0.2s ease;
+}
+div[data-testid="stFileUploader"]:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-style: solid;
+}
+
+/* Custom Progress Bar */
+.stProgress > div > div {
+    background: linear-gradient(90deg, #3b82f6, #ec4899);
+}
