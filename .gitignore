@@ -6,14 +6,10 @@
 .env
 *.env.local
 
-# Generated output clips (any depth under /output)
-output/**/*.mp4
-output/**/*.mov
-output/**/*.avi
-output/**/*.mkv
-output/**/*.wav
-output/**/*.mp3
-
+# Generated output clips and cached analysis
+output/
+*.mp4
+*.wav
 # Python
 __pycache__/
 *.py[cod]

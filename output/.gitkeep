@@ -1,3 +1,0 @@
-# output/.gitkeep
-# This file ensures the /output directory is tracked by Git.
-# Generated video clips (.mp4, .mov) are excluded via .gitignore.

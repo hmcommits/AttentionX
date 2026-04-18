@@ -35,9 +35,10 @@ def _load_css():
 _load_css()
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants & Config
 # ---------------------------------------------------------------------------
-API_BASE = "http://localhost:8000"
+import os
+API_BASE = os.environ.get("API_URL", "http://localhost:8000")
 ACCEPTED_TYPES = ["mp4", "mov"]
 
 
